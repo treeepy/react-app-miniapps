@@ -1,44 +1,68 @@
 'use client'
 
-import WebApp from '@twa-dev/sdk'
-import { useEffect, useState } from 'react'
+import Head from 'next/head'
+import { useState } from 'react'
+import Calendar, { CalendarProps } from 'react-calendar'
+import 'react-calendar/dist/Calendar.css'
 
-// Define the interface for user data
-interface UserData {
-  id: number;
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  language_code: string;
-  is_premium?: boolean;
+interface Note {
+  date: Date
+  content: string
 }
 
 export default function Home() {
-  const [userData, setUserData] = useState<UserData | null>(null)
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [notes, setNotes] = useState<Note[]>([])
+  const [noteContent, setNoteContent] = useState<string>('')
 
-  useEffect(() => {
-    if (WebApp.initDataUnsafe.user) {
-      setUserData(WebApp.initDataUnsafe.user as UserData)
+  const addNote = () => {
+    setNotes([...notes, { date: selectedDate, content: noteContent }])
+    setNoteContent('')
+  }
+
+  const notesForSelectedDate = notes.filter(note =>
+      note.date.toDateString() === selectedDate.toDateString()
+  )
+
+  const handleDateChange: CalendarProps['onChange'] = (value) => {
+    if (value instanceof Date) {
+      setSelectedDate(value)
     }
-  }, [])
+  }
 
   return (
-    <main className="p-4">
-      {userData ? (
-        <>
-          <h1 className="text-2xl font-bold mb-4">User Data</h1>
-          <ul>
-            <li>ID: {userData.id}</li>
-            <li>First Name: {userData.first_name}</li>
-            <li>Last Name: {userData.last_name || 'N/A'}</li>
-            <li>Username: {userData.username || 'N/A'}</li>
-            <li>Language Code: {userData.language_code}</li>
-            <li>Is Premium: {userData.is_premium ? 'Yes' : 'No'}</li>
-          </ul>
-        </>
-      ) : (
-        <div>Loading...</div>
-      )}
-    </main>
+      <div className="min-h-screen p-4">
+        <Head>
+          <title>Simple Note App</title>
+          <meta name="description" content="A simple note app with calendar integration" />
+        </Head>
+        <main className="max-w-2xl mx-auto">
+          <h1 className="text-3xl font-bold mb-4">Simple Note App</h1>
+          <Calendar onChange={handleDateChange} value={selectedDate} className="mb-4" />
+          <div className="mb-4">
+            <h2 className="text-2xl">Notes for {selectedDate.toDateString()}</h2>
+            <ul>
+              {notesForSelectedDate.map((note, index) => (
+                  <li key={index} className="border p-2 my-2">{note.content}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="mb-4">
+          <textarea
+              className="border w-full p-2"
+              rows={3}
+              value={noteContent}
+              onChange={(e) => setNoteContent(e.target.value)}
+              placeholder="Write your note here..."
+          />
+            <button
+                className="bg-blue-500 text-white py-2 px-4 mt-2"
+                onClick={addNote}
+            >
+              Add Note
+            </button>
+          </div>
+        </main>
+      </div>
   )
 }
